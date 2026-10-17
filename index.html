@@ -6,7 +6,119 @@
   <title>ระบบยืม-คืนหนังสือห้องสมุด</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&family=IBM+Plex+Sans+Thai+Looped:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <style>
+/* Layout: teal masthead with tabs, then a two-column work area (form | table) that stacks on phones */
+:root {
+  --bg: #f4f2ed;
+  --surface: #ffffff;
+  --sunk: #ece8e0;
+  --ink: #1d2b2d;
+  --muted: #64716f;
+  --line: #e0dbd1;
+  --brand: #1f5f5b;
+  --brand-ink: #ffffff;
+  --brand-soft: #dfedea;
+  --accent: #b6592a;
+  --accent-soft: #f8eadf;
+  --bad: #b3261e;
+  --bad-soft: #fae6e3;
+  --good: #2c7a4d;
+  --good-soft: #e2f1e7;
+  --font-body: 'Sarabun', 'Leelawadee UI', 'Thonburi', system-ui, sans-serif;
+  --font-display: 'IBM Plex Sans Thai Looped', 'Sarabun', system-ui, sans-serif;
+  --radius: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131a1a; --surface: #1b2423; --sunk: #222d2c; --ink: #e6ecea; --muted: #94a4a1; --line: #2f3c3a;
+    --brand: #2b7a74; --brand-ink: #ffffff; --brand-soft: #1f3836; --accent: #e08a5a; --accent-soft: #3a2a20;
+    --bad: #f08a80; --bad-soft: #3d2220; --good: #7fcf9d; --good-soft: #1d3326; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #131a1a; --surface: #1b2423; --sunk: #222d2c; --ink: #e6ecea; --muted: #94a4a1; --line: #2f3c3a;
+  --brand: #2b7a74; --brand-ink: #ffffff; --brand-soft: #1f3836; --accent: #e08a5a; --accent-soft: #3a2a20;
+  --bad: #f08a80; --bad-soft: #3d2220; --good: #7fcf9d; --good-soft: #1d3326; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+[hidden] { display: none !important; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+.top { background: var(--brand); color: var(--brand-ink); }
+.top .wrap { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; padding-block: 18px 0; }
+.brand { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; min-width: 0; }
+.mark { flex: none; width: 40px; height: 40px; border-radius: 10px; background: var(--brand-ink); color: var(--brand); display: grid; place-items: center; }
+.brand h1 { margin: 0; font-family: var(--font-display); font-size: 20px; line-height: 1.25; text-wrap: balance; }
+.brand p { margin: 0; font-size: 13px; opacity: .8; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; max-width: 100%; }
+.tabs button { border: 0; background: transparent; color: var(--brand-ink); opacity: .78; font: inherit; font-weight: 600; padding: 10px 16px; border-radius: 10px 10px 0 0; cursor: pointer; white-space: nowrap; }
+.tabs button[aria-selected="true"] { background: var(--bg); color: var(--ink); opacity: 1; }
+.tabs button:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+main.wrap { padding-block: 22px 48px; display: grid; gap: 18px; }
+.notice { background: var(--accent-soft); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 14px; font-size: 14px; }
+.panel { display: grid; gap: 18px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; min-width: 0; }
+.card h2 { margin: 0; font-family: var(--font-display); font-size: 17px; }
+.head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.hint { color: var(--muted); font-size: 13px; margin: 0; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
+.stat b { display: block; font-size: 26px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.stat span { color: var(--muted); font-size: 13px; }
+.stat.warn b { color: var(--bad); }
+.stat.good b { color: var(--good); }
+
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+.rules div { background: var(--sunk); border-radius: 10px; padding: 10px 12px; display: grid; }
+.rules span { color: var(--muted); font-size: 13px; }
+
+.split { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 860px) { .split { grid-template-columns: minmax(0, 1fr); } }
+form { display: grid; gap: 10px; }
+label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+input, select { font: inherit; color: var(--ink); background: var(--surface); padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; width: 100%; min-width: 0; }
+input:focus, select:focus { outline: 2px solid var(--brand-soft); border-color: var(--brand); }
+.search { max-width: 280px; }
+.check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.check input { width: auto; }
+
+.btn { font: inherit; font-weight: 600; border: 0; border-radius: 8px; padding: 9px 14px; cursor: pointer; }
+.btn.primary { background: var(--brand); color: var(--brand-ink); margin-top: 4px; }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn.sm { padding: 4px 10px; font-size: 13px; white-space: nowrap; }
+.btn.ghost { background: var(--brand-soft); color: var(--brand); }
+.btn.danger { background: var(--bad-soft); color: var(--bad); }
+.btn.armed { background: var(--bad); color: var(--brand-ink); }
+:root:not([data-theme="light"]) .btn.ghost { color: var(--ink); }
+
+.scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-weight: 600; color: var(--muted); font-size: 13px; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+td.d { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.sub { color: var(--muted); font-size: 12px; }
+.empty { text-align: center; color: var(--muted); padding: 26px 10px; }
+
+.pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.pill.ok { background: var(--good-soft); color: var(--good); }
+.pill.out { background: var(--accent-soft); color: var(--accent); }
+.pill.late { background: var(--bad-soft); color: var(--bad); }
+.pill.type { background: var(--brand-soft); color: var(--brand); }
+.pill.done { background: var(--sunk); color: var(--muted); }
+:root:not([data-theme="light"]) .pill.type { color: var(--ink); }
+
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 16px); background: var(--ink); color: var(--bg); padding: 11px 16px; border-radius: 10px; opacity: 0; transition: .25s; pointer-events: none; max-width: calc(100% - 32px); }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.error { background: var(--bad); color: var(--brand-ink); }
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
 </head>
 <body>
 <header class="top">
@@ -115,10 +227,607 @@
 <div class="toast" id="toast" role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="js/config.js"></script>
-<script src="js/models.js"></script>
-<script src="js/repositories.js"></script>
-<script src="js/service.js"></script>
-<script src="js/app.js"></script>
+<script>
+// js/config.js — ค่าการเชื่อมต่อ Supabase
+// ใช้ได้เฉพาะ "publishable key" (คีย์สาธารณะ) เท่านั้น ห้ามใส่ secret / service_role key ในไฟล์นี้
+const SUPABASE_CONFIG = {
+  url: 'https://ssikslwuakteirsbxalt.supabase.co',
+  key: 'sb_publishable_MrHgwf37R2qeoZF0EC46og_XhXxWDar'
+};
+
+// js/models.js — คลาสหลักของระบบ (Model) ตามหลัก OOP
+const ItemType = Object.freeze({ BOOK: 'BOOK', MAGAZINE: 'MAGAZINE', TEXTBOOK: 'TEXTBOOK' });
+const MemberType = Object.freeze({ STUDENT: 'STUDENT', TEACHER: 'TEACHER' });
+
+class DateUtil {
+  static today() {
+    const d = new Date();
+    return DateUtil.format(new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())));
+  }
+  static format(date) { return date.toISOString().slice(0, 10); }
+  static addDays(str, days) {
+    const d = new Date(str + 'T00:00:00Z');
+    d.setUTCDate(d.getUTCDate() + days);
+    return DateUtil.format(d);
+  }
+  static diffDays(from, to) {
+    return Math.round((new Date(to + 'T00:00:00Z') - new Date(from + 'T00:00:00Z')) / 86400000);
+  }
+}
+
+/** Abstract class ของทรัพยากรทุกชนิด */
+class LibraryItem {
+  _id; _title; _author; _year; _available; _itemType; // protected (ตามธรรมเนียม _)
+  constructor(title, author, year, itemType, id = null, available = true) {
+    if (new.target === LibraryItem) throw new TypeError('LibraryItem เป็น abstract class');
+    this._title = String(title).trim();
+    this._author = String(author).trim();
+    this._year = Number(year);
+    this._itemType = itemType;
+    this._id = id;
+    this._available = available;
+  }
+  // abstract methods
+  getTypeLabel() { throw new Error('abstract'); }
+  getLoanDays() { throw new Error('abstract'); }
+  getFinePerDay() { throw new Error('abstract'); }
+  getExtra() { throw new Error('abstract'); }
+  getExtraLabel() { throw new Error('abstract'); }
+  validateExtra() { throw new Error('abstract'); }
+
+  validate() {
+    if (!this._title) return 'กรุณากรอกชื่อเรื่อง';
+    if (!this._author) return 'กรุณากรอกชื่อผู้แต่ง';
+    const y = new Date().getFullYear();
+    if (!Number.isInteger(this._year) || this._year < 1000 || this._year > y) return `ปีที่พิมพ์ต้องอยู่ระหว่าง 1000 - ${y}`;
+    return this.validateExtra();
+  }
+  calculateFine(daysLate) { return Math.max(0, daysLate) * this.getFinePerDay(); }
+
+  getId() { return this._id; }
+  setId(id) { this._id = id; }
+  getTitle() { return this._title; }
+  getAuthor() { return this._author; }
+  getYear() { return this._year; }
+  getType() { return this._itemType; }
+  isAvailable() { return this._available; }
+  setAvailable(v) { this._available = v; }
+  toRecord() {
+    return { type: this._itemType, title: this._title, author: this._author, year: this._year, extra: this.getExtra(), available: this._available };
+  }
+}
+
+class Book extends LibraryItem {
+  #isbn;
+  constructor(title, author, year, isbn, id = null, available = true) {
+    super(title, author, year, ItemType.BOOK, id, available);
+    this.#isbn = String(isbn).trim();
+  }
+  getTypeLabel() { return 'หนังสือทั่วไป'; }
+  getLoanDays() { return 14; }
+  getFinePerDay() { return 5; }
+  getExtra() { return this.#isbn; }
+  getExtraLabel() { return 'ISBN'; }
+  validateExtra() {
+    return /^\d{10}(\d{3})?$/.test(this.#isbn.replace(/-/g, '')) ? null : 'ISBN ต้องเป็นตัวเลข 10 หรือ 13 หลัก';
+  }
+}
+
+class Magazine extends LibraryItem {
+  static MAX_FINE = 50;
+  #issueNo;
+  constructor(title, author, year, issueNo, id = null, available = true) {
+    super(title, author, year, ItemType.MAGAZINE, id, available);
+    this.#issueNo = String(issueNo).trim();
+  }
+  getTypeLabel() { return 'นิตยสาร'; }
+  getLoanDays() { return 7; }
+  getFinePerDay() { return 2; }
+  getExtra() { return this.#issueNo; }
+  getExtraLabel() { return 'ฉบับที่'; }
+  validateExtra() { return this.#issueNo ? null : 'กรุณากรอกฉบับที่ของนิตยสาร'; }
+  // Method overriding: จำกัดค่าปรับสูงสุด
+  calculateFine(daysLate) { return Math.min(super.calculateFine(daysLate), Magazine.MAX_FINE); }
+}
+
+class Textbook extends LibraryItem {
+  #subject;
+  constructor(title, author, year, subject, id = null, available = true) {
+    super(title, author, year, ItemType.TEXTBOOK, id, available);
+    this.#subject = String(subject).trim();
+  }
+  getTypeLabel() { return 'ตำราเรียน'; }
+  getLoanDays() { return 3; }
+  getFinePerDay() { return 10; }
+  getExtra() { return this.#subject; }
+  getExtraLabel() { return 'รายวิชา'; }
+  validateExtra() { return this.#subject ? null : 'กรุณากรอกรายวิชาของตำรา'; }
+}
+
+/** Abstract class ของสมาชิก */
+class Member {
+  _id; _name; _email; _memberType;
+  constructor(name, email, memberType, id = null) {
+    if (new.target === Member) throw new TypeError('Member เป็น abstract class');
+    this._name = String(name).trim();
+    this._email = String(email).trim().toLowerCase();
+    this._memberType = memberType;
+    this._id = id;
+  }
+  getTypeLabel() { throw new Error('abstract'); }
+  getMaxLoans() { throw new Error('abstract'); }
+  getExtraLoanDays() { throw new Error('abstract'); }
+  validate() {
+    if (!this._name) return 'กรุณากรอกชื่อสมาชิก';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this._email)) return 'รูปแบบอีเมลไม่ถูกต้อง';
+    return null;
+  }
+  getId() { return this._id; }
+  setId(id) { this._id = id; }
+  getName() { return this._name; }
+  getEmail() { return this._email; }
+  getType() { return this._memberType; }
+  toRecord() { return { type: this._memberType, name: this._name, email: this._email }; }
+}
+class Student extends Member {
+  constructor(name, email, id = null) { super(name, email, MemberType.STUDENT, id); }
+  getTypeLabel() { return 'นักศึกษา'; }
+  getMaxLoans() { return 3; }
+  getExtraLoanDays() { return 0; }
+}
+class Teacher extends Member {
+  constructor(name, email, id = null) { super(name, email, MemberType.TEACHER, id); }
+  getTypeLabel() { return 'อาจารย์'; }
+  getMaxLoans() { return 10; }
+  getExtraLoanDays() { return 7; }
+}
+
+/** Loan — Composition: ประกอบด้วย LibraryItem และ Member */
+class Loan {
+  #id; #item; #member; #borrowDate; #dueDate; #returnDate; #fine;
+  constructor(item, member, borrowDate, dueDate, returnDate = null, fine = 0, id = null) {
+    this.#item = item; this.#member = member;
+    this.#borrowDate = borrowDate; this.#dueDate = dueDate;
+    this.#returnDate = returnDate; this.#fine = fine; this.#id = id;
+  }
+  static create(item, member, borrowDate = DateUtil.today()) {
+    const days = item.getLoanDays() + member.getExtraLoanDays();
+    return new Loan(item, member, borrowDate, DateUtil.addDays(borrowDate, days));
+  }
+  isReturned() { return this.#returnDate !== null; }
+  getDaysLate(asOf = DateUtil.today()) {
+    return Math.max(0, DateUtil.diffDays(this.#dueDate, this.#returnDate ?? asOf));
+  }
+  isOverdue(asOf = DateUtil.today()) { return !this.isReturned() && this.getDaysLate(asOf) > 0; }
+  // Polymorphism: item อาจเป็น Book / Magazine / Textbook
+  calculateFine(asOf = DateUtil.today()) {
+    return this.isReturned() ? this.#fine : this.#item.calculateFine(this.getDaysLate(asOf));
+  }
+  markReturned(date = DateUtil.today()) {
+    this.#fine = this.#item.calculateFine(Math.max(0, DateUtil.diffDays(this.#dueDate, date)));
+    this.#returnDate = date;
+    this.#item.setAvailable(true);
+  }
+  getId() { return this.#id; }
+  setId(id) { this.#id = id; }
+  getItem() { return this.#item; }
+  getMember() { return this.#member; }
+  getBorrowDate() { return this.#borrowDate; }
+  getDueDate() { return this.#dueDate; }
+  getReturnDate() { return this.#returnDate; }
+  toRecord() {
+    return { itemId: this.#item.getId(), memberId: this.#member.getId(), borrowDate: this.#borrowDate,
+             dueDate: this.#dueDate, returnDate: this.#returnDate, fine: this.#fine };
+  }
+}
+
+class ItemFactory {
+  static create({ type, title, author, year, extra }, id = null, available = true) {
+    switch (type) {
+      case ItemType.BOOK: return new Book(title, author, year, extra, id, available);
+      case ItemType.MAGAZINE: return new Magazine(title, author, year, extra, id, available);
+      case ItemType.TEXTBOOK: return new Textbook(title, author, year, extra, id, available);
+      default: return null;
+    }
+  }
+}
+class MemberFactory {
+  static create({ type, name, email }, id = null) {
+    switch (type) {
+      case MemberType.STUDENT: return new Student(name, email, id);
+      case MemberType.TEACHER: return new Teacher(name, email, id);
+      default: return null;
+    }
+  }
+}
+
+// js/repositories.js — ส่วนที่ติดต่อฐานข้อมูล Supabase (PostgreSQL)
+
+/**
+ * Abstract Repository: เก็บคำสั่งที่ใช้ร่วมกันทุกตาราง
+ * คลาสลูกต้อง implement mapRow() (แถว -> object) และ toRow() (object -> แถว)
+ */
+class Repository {
+  _client;      // Supabase client (protected)
+  _table;       // ชื่อตาราง
+  _rows = [];   // ข้อมูลล่าสุดที่โหลดมา
+
+  constructor(client, table) {
+    if (new.target === Repository) throw new TypeError('Repository เป็น abstract class');
+    this._client = client;
+    this._table = table;
+  }
+
+  mapRow(row) { throw new Error('abstract'); }
+  toRow(entity) { throw new Error('abstract'); }
+
+  // SELECT * FROM table ORDER BY created_at DESC
+  async load() {
+    const { data, error } = await this._client.from(this._table).select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    this._rows = data;
+  }
+
+  findAll() { return this._rows.map((r) => this.mapRow(r)).filter(Boolean); }
+  findById(id) {
+    const row = this._rows.find((r) => r.id === id);
+    return row ? this.mapRow(row) : null;
+  }
+  count() { return this._rows.length; }
+
+  // INSERT ถ้ายังไม่มี id, UPDATE ถ้ามี id แล้ว
+  async save(entity) {
+    const row = this.toRow(entity);
+    const id = entity.getId();
+    if (id === null) {
+      const { data, error } = await this._client.from(this._table).insert(row).select().single();
+      if (error) throw error;
+      entity.setId(data.id);
+    } else {
+      const { error } = await this._client.from(this._table).update(row).eq('id', id);
+      if (error) throw error;
+    }
+    return entity;
+  }
+
+  async delete(id) {
+    const { error } = await this._client.from(this._table).delete().eq('id', id);
+    if (error) throw error;
+  }
+}
+
+class ItemRepository extends Repository {
+  constructor(client) { super(client, 'items'); }
+  mapRow(r) { return ItemFactory.create(r, r.id, r.available); }
+  toRow(item) {
+    return { type: item.getType(), title: item.getTitle(), author: item.getAuthor(), year: item.getYear(),
+             extra: item.getExtra(), available: item.isAvailable() };
+  }
+  search(keyword) {
+    const k = keyword.trim().toLowerCase();
+    if (!k) return this.findAll();
+    return this.findAll().filter((i) => [i.getTitle(), i.getAuthor(), i.getExtra()].some((s) => s.toLowerCase().includes(k)));
+  }
+  countAvailable() { return this._rows.filter((r) => r.available).length; }
+}
+
+class MemberRepository extends Repository {
+  constructor(client) { super(client, 'members'); }
+  mapRow(r) { return MemberFactory.create(r, r.id); }
+  toRow(m) { return { type: m.getType(), name: m.getName(), email: m.getEmail() }; }
+  findByEmail(email) { return this.findAll().find((m) => m.getEmail() === email.toLowerCase()) ?? null; }
+}
+
+class LoanRepository extends Repository {
+  #itemRepo;
+  #memberRepo;
+  constructor(client, itemRepo, memberRepo) {
+    super(client, 'loans');
+    this.#itemRepo = itemRepo;      // Composition: ใช้ Repository อื่นประกอบ object ของ Loan
+    this.#memberRepo = memberRepo;
+  }
+  mapRow(r) {
+    const item = this.#itemRepo.findById(r.item_id);
+    const member = this.#memberRepo.findById(r.member_id);
+    if (!item || !member) return null;
+    return new Loan(item, member, r.borrow_date, r.due_date, r.return_date ?? null, Number(r.fine ?? 0), r.id);
+  }
+  toRow(loan) {
+    return { item_id: loan.getItem().getId(), member_id: loan.getMember().getId(), borrow_date: loan.getBorrowDate(),
+             due_date: loan.getDueDate(), return_date: loan.getReturnDate(), fine: loan.isReturned() ? loan.calculateFine() : 0 };
+  }
+  findActive() { return this.findAll().filter((l) => !l.isReturned()).sort((a, b) => a.getDueDate().localeCompare(b.getDueDate())); }
+  findActiveByMember(id) { return this.findActive().filter((l) => l.getMember().getId() === id); }
+  countByItem(id) { return this._rows.filter((r) => r.item_id === id).length; }
+  countByMember(id) { return this._rows.filter((r) => r.member_id === id).length; }
+  totalFinesCollected() { return this.findAll().filter((l) => l.isReturned()).reduce((s, l) => s + l.calculateFine(), 0); }
+}
+
+// js/service.js — กฎของห้องสมุด (Composition ของ Repository ทั้งสาม)
+
+class LibraryService {
+  #items; #members; #loans;
+  constructor(client) {
+    this.#items = new ItemRepository(client);
+    this.#members = new MemberRepository(client);
+    this.#loans = new LoanRepository(client, this.#items, this.#members);
+  }
+
+  // โหลดข้อมูลล่าสุดจากฐานข้อมูล (loans ต้องโหลดหลังสุด เพราะอ้างอิง items และ members)
+  async refresh() {
+    await Promise.all([this.#items.load(), this.#members.load()]);
+    await this.#loans.load();
+  }
+  static #err(message) { return [null, { message }]; }
+
+  getItems(q = '') { return this.#items.search(q); }
+  getMembers() { return this.#members.findAll(); }
+  getLoans(activeOnly = false) { return activeOnly ? this.#loans.findActive() : this.#loans.findAll().sort((a, b) => b.getBorrowDate().localeCompare(a.getBorrowDate())); }
+
+  async addItem(input) {
+    const item = ItemFactory.create(input);
+    if (!item) return LibraryService.#err('ประเภททรัพยากรไม่ถูกต้อง');
+    const bad = item.validate();
+    if (bad) return LibraryService.#err(bad);
+    return [await this.#items.save(item), null];
+  }
+  async deleteItem(id) {
+    const item = this.#items.findById(id);
+    if (!item) return LibraryService.#err('ไม่พบทรัพยากรนี้');
+    if (!item.isAvailable()) return LibraryService.#err('ทรัพยากรนี้กำลังถูกยืมอยู่ ลบไม่ได้');
+    if (this.#loans.countByItem(id) > 0) return LibraryService.#err('ทรัพยากรนี้มีประวัติการยืม ลบไม่ได้');
+    await this.#items.delete(id);
+    return [true, null];
+  }
+  async addMember(input) {
+    const m = MemberFactory.create(input);
+    if (!m) return LibraryService.#err('ประเภทสมาชิกไม่ถูกต้อง');
+    const bad = m.validate();
+    if (bad) return LibraryService.#err(bad);
+    if (this.#members.findByEmail(m.getEmail())) return LibraryService.#err('อีเมลนี้ถูกใช้แล้ว');
+    return [await this.#members.save(m), null];
+  }
+  async deleteMember(id) {
+    if (!this.#members.findById(id)) return LibraryService.#err('ไม่พบสมาชิกนี้');
+    if (this.#loans.countByMember(id) > 0) return LibraryService.#err('สมาชิกนี้มีประวัติการยืม ลบไม่ได้');
+    await this.#members.delete(id);
+    return [true, null];
+  }
+  async borrow(itemId, memberId, date = DateUtil.today()) {
+    const item = this.#items.findById(itemId);
+    if (!item) return LibraryService.#err('กรุณาเลือกทรัพยากร');
+    const member = this.#members.findById(memberId);
+    if (!member) return LibraryService.#err('กรุณาเลือกสมาชิก');
+    if (!item.isAvailable()) return LibraryService.#err(`"${item.getTitle()}" ถูกยืมไปแล้ว`);
+    const active = this.#loans.findActiveByMember(memberId);
+    if (active.some((l) => l.isOverdue(date))) return LibraryService.#err(`${member.getName()} มีรายการเกินกำหนดคืน กรุณาคืนก่อนยืมใหม่`);
+    if (active.length >= member.getMaxLoans()) return LibraryService.#err(`${member.getTypeLabel()}ยืมพร้อมกันได้ไม่เกิน ${member.getMaxLoans()} รายการ`);
+    const loan = Loan.create(item, member, date);
+    item.setAvailable(false);
+    await this.#items.save(item);
+    return [await this.#loans.save(loan), null];
+  }
+  async returnItem(loanId) {
+    const loan = this.#loans.findById(loanId);
+    if (!loan) return LibraryService.#err('ไม่พบรายการยืมนี้');
+    if (loan.isReturned()) return LibraryService.#err('รายการนี้คืนแล้ว');
+    loan.markReturned();
+    await this.#items.save(loan.getItem());
+    return [await this.#loans.save(loan), null];
+  }
+  getStats() {
+    const active = this.#loans.findActive(), overdue = active.filter((l) => l.isOverdue());
+    return {
+      totalItems: this.#items.count(), availableItems: this.#items.countAvailable(),
+      totalMembers: this.#members.count(), activeLoans: active.length, overdueLoans: overdue.length,
+      pendingFines: overdue.reduce((s, l) => s + l.calculateFine(), 0), collectedFines: this.#loans.totalFinesCollected()
+    };
+  }
+}
+
+// js/app.js — ส่วนแสดงผลหน้าเว็บ (UI) เรียกใช้ LibraryService
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const thDate = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
+const baht = (n) => Number(n).toLocaleString('th-TH') + ' บาท';
+let library = null, tab = 'dashboard', renderQueued = false, busy = false;
+
+let toastTimer;
+function toast(msg, isError = false) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (isError ? ' error' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (el.className = 'toast'), 3500);
+}
+
+// แปลงข้อผิดพลาดจาก Supabase / PostgreSQL เป็นข้อความที่ผู้ใช้เข้าใจ
+function describeError(e) {
+  const code = String(e?.code ?? '');
+  const msg = String(e?.message ?? '');
+  if (code === '42P01' || code === 'PGRST205' || /does not exist|schema cache/i.test(msg))
+    return 'ยังไม่ได้สร้างตารางในฐานข้อมูล กรุณารันไฟล์ setup.sql ใน Supabase SQL Editor ก่อน';
+  if (code === '23505') return 'ข้อมูลนี้ซ้ำกับที่มีอยู่แล้ว (เช่น อีเมลซ้ำ)';
+  if (code === '23503') return 'ลบไม่ได้ เพราะข้อมูลนี้ถูกอ้างอิงอยู่ในประวัติการยืม';
+  if (code === '42501' || /row-level security/i.test(msg)) return 'ฐานข้อมูลไม่อนุญาตให้แก้ไข กรุณาตรวจสอบ Policy ใน setup.sql';
+  if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) return 'เชื่อมต่อฐานข้อมูลไม่ได้ ตรวจสอบอินเทอร์เน็ต หรือดูว่าโปรเจกต์ Supabase ถูกพักอยู่หรือไม่';
+  return 'เกิดข้อผิดพลาด: ' + (msg || 'ไม่ทราบสาเหตุ');
+}
+
+// ทำงานหนึ่งอย่าง -> ถ้าสำเร็จให้โหลดข้อมูลใหม่จากฐานข้อมูลแล้ววาดหน้าใหม่
+async function act(fn, okMsg) {
+  if (busy) return;
+  busy = true;
+  document.body.style.cursor = 'progress';
+  try {
+    const [data, err] = await fn();
+    if (err) { toast(err.message, true); return; }
+    await library.refresh();
+    render();
+    if (okMsg) toast(typeof okMsg === 'function' ? okMsg(data) : okMsg);
+    return data;
+  } catch (e) {
+    console.error(e);
+    toast(describeError(e), true);
+    try { await library.refresh(); render(); } catch {}
+  } finally {
+    busy = false;
+    document.body.style.cursor = '';
+  }
+}
+
+function table(el, heads, rows, emptyText) {
+  el.innerHTML = `<thead><tr>${heads.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${
+    rows.length ? rows.join('') : `<tr><td class="empty" colspan="${heads.length}">${emptyText}</td></tr>`}</tbody>`;
+}
+function statusPill(l) {
+  if (l.isReturned()) return `<span class="pill done">คืนแล้ว ${thDate(l.getReturnDate())}</span>`;
+  if (l.isOverdue()) return `<span class="pill late">เกินกำหนด ${l.getDaysLate()} วัน</span>`;
+  return '<span class="pill out">กำลังยืม</span>';
+}
+
+function renderDashboard() {
+  const s = library.getStats();
+  const cards = [
+    ['ทรัพยากรทั้งหมด', s.totalItems, ''], ['ว่างให้ยืม', s.availableItems, 'good'], ['สมาชิก', s.totalMembers, ''],
+    ['กำลังถูกยืม', s.activeLoans, ''], ['เกินกำหนด', s.overdueLoans, s.overdueLoans ? 'warn' : ''],
+    ['ค่าปรับค้างชำระ', baht(s.pendingFines), s.pendingFines ? 'warn' : ''], ['ค่าปรับที่เก็บแล้ว', baht(s.collectedFines), '']
+  ];
+  $('#stats').innerHTML = cards.map(([l, n, c]) => `<div class="stat ${c}"><b>${n}</b><span>${l}</span></div>`).join('');
+  table($('#activeTable'), ['ทรัพยากร', 'ผู้ยืม', 'วันที่ยืม', 'ครบกำหนด', 'สถานะ', 'ค่าปรับ'],
+    library.getLoans(true).map((l) => `<tr>
+      <td>${esc(l.getItem().getTitle())}<div class="sub">${esc(l.getItem().getTypeLabel())}</div></td>
+      <td>${esc(l.getMember().getName())}<div class="sub">${esc(l.getMember().getTypeLabel())}</div></td>
+      <td class="d">${thDate(l.getBorrowDate())}</td><td class="d">${thDate(l.getDueDate())}</td>
+      <td>${statusPill(l)}</td><td class="n">${baht(l.calculateFine())}</td></tr>`),
+    'ยังไม่มีรายการที่ยืมอยู่ ไปที่แท็บ "ยืม-คืน" เพื่อบันทึกการยืม');
+}
+
+function renderItems() {
+  const q = $('#itemSearch').value;
+  const items = library.getItems(q);
+  table($('#itemTable'), ['ชื่อเรื่อง', 'ประเภท', 'ปี', 'ข้อมูลเฉพาะ', 'สถานะ', ''],
+    items.map((i) => `<tr>
+      <td>${esc(i.getTitle())}<div class="sub">${esc(i.getAuthor())}</div></td>
+      <td><span class="pill type">${esc(i.getTypeLabel())}</span><div class="sub">ยืม ${i.getLoanDays()} วัน · ปรับ ${i.getFinePerDay()} บ./วัน</div></td>
+      <td class="d">${i.getYear()}</td>
+      <td><span class="sub">${esc(i.getExtraLabel())}</span><br>${esc(i.getExtra())}</td>
+      <td>${i.isAvailable() ? '<span class="pill ok">ว่าง</span>' : '<span class="pill out">ถูกยืม</span>'}</td>
+      <td><button class="btn sm danger" data-del="item" data-id="${esc(i.getId())}">ลบ</button></td></tr>`),
+    q ? 'ไม่พบผลการค้นหา' : 'ยังไม่มีทรัพยากร เพิ่มเล่มแรกจากฟอร์มด้านซ้าย');
+}
+
+function renderMembers() {
+  table($('#memberTable'), ['ชื่อ', 'อีเมล', 'ประเภท', 'สิทธิ์การยืม', ''],
+    library.getMembers().map((m) => `<tr>
+      <td>${esc(m.getName())}</td><td>${esc(m.getEmail())}</td>
+      <td><span class="pill type">${esc(m.getTypeLabel())}</span></td>
+      <td class="sub">สูงสุด ${m.getMaxLoans()} รายการ${m.getExtraLoanDays() ? ` · +${m.getExtraLoanDays()} วัน` : ''}</td>
+      <td><button class="btn sm danger" data-del="member" data-id="${esc(m.getId())}">ลบ</button></td></tr>`),
+    'ยังไม่มีสมาชิก เพิ่มคนแรกจากฟอร์มด้านซ้าย');
+}
+
+function renderLoans() {
+  const members = library.getMembers(), free = library.getItems().filter((i) => i.isAvailable());
+  const keep = (sel, html) => { const v = sel.value; sel.innerHTML = html; if ([...sel.options].some((o) => o.value === v)) sel.value = v; };
+  keep($('#loanMember'), members.length ? members.map((m) => `<option value="${esc(m.getId())}">${esc(m.getName())} (${esc(m.getTypeLabel())})</option>`).join('') : '<option value="">ยังไม่มีสมาชิก</option>');
+  keep($('#loanItem'), free.length ? free.map((i) => `<option value="${esc(i.getId())}">${esc(i.getTitle())} · ${esc(i.getTypeLabel())}</option>`).join('') : '<option value="">ไม่มีทรัพยากรว่าง</option>');
+  updateDue();
+  table($('#loanTable'), ['ทรัพยากร', 'ผู้ยืม', 'ยืม', 'ครบกำหนด', 'สถานะ', 'ค่าปรับ', ''],
+    library.getLoans($('#activeOnly').checked).map((l) => `<tr>
+      <td>${esc(l.getItem().getTitle())}<div class="sub">${esc(l.getItem().getTypeLabel())}</div></td>
+      <td>${esc(l.getMember().getName())}</td>
+      <td class="d">${thDate(l.getBorrowDate())}</td><td class="d">${thDate(l.getDueDate())}</td>
+      <td>${statusPill(l)}</td><td class="n">${baht(l.calculateFine())}</td>
+      <td>${l.isReturned() ? '' : `<button class="btn sm ghost" data-return="${esc(l.getId())}">คืน</button>`}</td></tr>`),
+    'ยังไม่มีรายการยืม');
+}
+function updateDue() {
+  const item = library.getItems().find((i) => i.getId() === $('#loanItem').value);
+  const member = library.getMembers().find((m) => m.getId() === $('#loanMember').value);
+  if (!item || !member) return ($('#duePreview').textContent = '');
+  const days = item.getLoanDays() + member.getExtraLoanDays();
+  $('#duePreview').textContent = `ยืมได้ ${days} วัน · ครบกำหนดคืน ${thDate(DateUtil.addDays(DateUtil.today(), days))}`;
+}
+
+const renderers = { dashboard: renderDashboard, items: renderItems, members: renderMembers, loans: renderLoans };
+function render() {
+  if (renderQueued) return;
+  renderQueued = true;
+  queueMicrotask(() => { renderQueued = false; if (library) renderers[tab](); });
+}
+
+$('#tabs').addEventListener('click', (e) => {
+  const t = e.target.closest('button')?.dataset.tab;
+  if (!t) return;
+  tab = t;
+  document.querySelectorAll('#tabs button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+  document.querySelectorAll('.panel').forEach((p) => (p.hidden = p.id !== t));
+  render();
+});
+
+const extraLabels = { BOOK: 'ISBN (10 หรือ 13 หลัก)', MAGAZINE: 'ฉบับที่', TEXTBOOK: 'รายวิชา' };
+$('#itemType').addEventListener('change', (e) => ($('#extraLabel').textContent = extraLabels[e.target.value]));
+$('#itemSearch').addEventListener('input', render);
+$('#activeOnly').addEventListener('change', render);
+$('#loanItem').addEventListener('change', updateDue);
+$('#loanMember').addEventListener('change', updateDue);
+
+$('#itemForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = Object.fromEntries(new FormData(e.target));
+  if (await act(() => library.addItem(f), 'เพิ่มทรัพยากรแล้ว')) { e.target.reset(); $('#extraLabel').textContent = extraLabels.BOOK; }
+});
+$('#memberForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = Object.fromEntries(new FormData(e.target));
+  if (await act(() => library.addMember(f), 'เพิ่มสมาชิกแล้ว')) e.target.reset();
+});
+$('#loanForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  await act(() => library.borrow($('#loanItem').value, $('#loanMember').value), (l) => `ยืมสำเร็จ ครบกำหนดคืน ${thDate(l.getDueDate())}`);
+});
+
+// ปุ่มลบต้องกดสองครั้ง (ยืนยันในหน้า) / ปุ่มคืน
+document.addEventListener('click', async (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.dataset.return) {
+    await act(() => library.returnItem(b.dataset.return), (l) => l.calculateFine() > 0 ? `คืนแล้ว มีค่าปรับ ${baht(l.calculateFine())}` : 'คืนแล้ว ไม่มีค่าปรับ');
+  } else if (b.dataset.del) {
+    if (!b.classList.contains('armed')) {
+      b.classList.add('armed'); b.textContent = 'ยืนยันลบ';
+      setTimeout(() => { b.classList.remove('armed'); b.textContent = 'ลบ'; }, 3000);
+      return;
+    }
+    const id = b.dataset.id;
+    if (b.dataset.del === 'item') await act(() => library.deleteItem(id), 'ลบทรัพยากรแล้ว');
+    else await act(() => library.deleteMember(id), 'ลบสมาชิกแล้ว');
+  }
+});
+
+// ---------- เริ่มต้น: เชื่อมต่อ Supabase แล้วโหลดข้อมูล ----------
+(async function start() {
+  const notice = $('#notice');
+  if (!window.supabase?.createClient) {
+    notice.textContent = 'โหลดไลบรารี Supabase ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วรีเฟรชหน้า';
+    notice.hidden = false;
+    return;
+  }
+  const client = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.key);
+  library = new LibraryService(client);
+  notice.textContent = 'กำลังโหลดข้อมูลจากฐานข้อมูล...';
+  notice.hidden = false;
+  try {
+    await library.refresh();
+    notice.hidden = true;
+  } catch (e) {
+    console.error(e);
+    notice.textContent = describeError(e);
+  }
+  render();
+})();
+
+</script>
 </body>
 </html>
