@@ -1,128 +1,124 @@
 <!doctype html>
 <html lang="th">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ระบบยืม-คืนหนังสือห้องสมุด</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/style.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ระบบยืม-คืนหนังสือห้องสมุด</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&family=IBM+Plex+Sans+Thai+Looped:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <header class="topbar">
-        <div class="wrap topbar-inner">
-            <div class="brand">
-                <span class="brand-mark">L</span>
-                <div>
-                    <h1>ระบบยืม-คืนหนังสือห้องสมุด</h1>
-                    <p>Library Management System · TypeScript + SQLite</p>
-                </div>
-            </div>
-            <nav class="tabs" id="tabs">
-                <button data-tab="dashboard" class="active">ภาพรวม</button>
-                <button data-tab="items">ทรัพยากร</button>
-                <button data-tab="members">สมาชิก</button>
-                <button data-tab="loans">ยืม-คืน</button>
-            </nav>
-        </div>
-    </header>
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <span class="mark" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19V5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h6"/></svg>
+      </span>
+      <div>
+        <h1>ระบบยืม-คืนหนังสือห้องสมุด</h1>
+        <p>Library Management System · OOP Project</p>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist" id="tabs">
+      <button role="tab" id="tab-dashboard" data-tab="dashboard" aria-selected="true">ภาพรวม</button>
+      <button role="tab" id="tab-items" data-tab="items" aria-selected="false">ทรัพยากร</button>
+      <button role="tab" id="tab-members" data-tab="members" aria-selected="false">สมาชิก</button>
+      <button role="tab" id="tab-loans" data-tab="loans" aria-selected="false">ยืม-คืน</button>
+    </nav>
+  </div>
+</header>
 
-    <main class="wrap">
-        <!-- ภาพรวม -->
-        <section id="dashboard" class="panel active">
-            <div class="stats" id="stats"></div>
-            <div class="card">
-                <div class="card-head">
-                    <h2>รายการที่ยังไม่คืน</h2>
-                    <span class="hint">เรียงตามวันครบกำหนด</span>
-                </div>
-                <div class="table-wrap"><table id="activeTable"></table></div>
-            </div>
-            <div class="card rules">
-                <h2>กติกาการยืม</h2>
-                <div class="rule-grid">
-                    <div><b>หนังสือทั่วไป</b><span>ยืม 14 วัน · ปรับวันละ 5 บาท</span></div>
-                    <div><b>นิตยสาร</b><span>ยืม 7 วัน · ปรับวันละ 2 บาท (สูงสุด 50 บาท)</span></div>
-                    <div><b>ตำราเรียน</b><span>ยืม 3 วัน · ปรับวันละ 10 บาท</span></div>
-                    <div><b>นักศึกษา</b><span>ยืมพร้อมกันได้ 3 รายการ</span></div>
-                    <div><b>อาจารย์</b><span>ยืมพร้อมกันได้ 10 รายการ · ได้วันยืมเพิ่ม 7 วัน</span></div>
-                    <div><b>มีรายการเกินกำหนด</b><span>ต้องคืนก่อนจึงจะยืมใหม่ได้</span></div>
-                </div>
-            </div>
-        </section>
+<main class="wrap">
+  <div class="notice" id="notice" hidden></div>
 
-        <!-- ทรัพยากร -->
-        <section id="items" class="panel">
-            <div class="layout">
-                <form class="card form" id="itemForm">
-                    <h2>เพิ่มทรัพยากร</h2>
-                    <label>ประเภท
-                        <select name="type" id="itemType">
-                            <option value="BOOK">หนังสือทั่วไป</option>
-                            <option value="MAGAZINE">นิตยสาร</option>
-                            <option value="TEXTBOOK">ตำราเรียน</option>
-                        </select>
-                    </label>
-                    <label>ชื่อเรื่อง <input name="title" required /></label>
-                    <label>ผู้แต่ง / สำนักพิมพ์ <input name="author" required /></label>
-                    <label>ปีที่พิมพ์ (ค.ศ.) <input name="year" type="number" required /></label>
-                    <label><span id="extraLabel">ISBN</span> <input name="extra" required /></label>
-                    <button class="btn primary" type="submit">บันทึก</button>
-                </form>
-                <div class="card">
-                    <div class="card-head">
-                        <h2>ทรัพยากรทั้งหมด</h2>
-                        <input class="search" id="itemSearch" placeholder="ค้นหาชื่อเรื่อง ผู้แต่ง ISBN..." />
-                    </div>
-                    <div class="table-wrap"><table id="itemTable"></table></div>
-                </div>
-            </div>
-        </section>
+  <section class="panel" id="dashboard">
+    <div class="stats" id="stats"></div>
+    <div class="card">
+      <div class="head"><h2>รายการที่ยังไม่คืน</h2><span class="hint">เรียงตามวันครบกำหนด</span></div>
+      <div class="scroll"><table id="activeTable"></table></div>
+    </div>
+    <div class="card">
+      <div class="head"><h2>กติกาการยืม</h2></div>
+      <div class="rules">
+        <div><b>หนังสือทั่วไป</b><span>ยืม 14 วัน · ปรับวันละ 5 บาท</span></div>
+        <div><b>นิตยสาร</b><span>ยืม 7 วัน · ปรับวันละ 2 บาท (สูงสุด 50 บาท)</span></div>
+        <div><b>ตำราเรียน</b><span>ยืม 3 วัน · ปรับวันละ 10 บาท</span></div>
+        <div><b>นักศึกษา</b><span>ยืมพร้อมกันได้ 3 รายการ</span></div>
+        <div><b>อาจารย์</b><span>ยืมพร้อมกันได้ 10 รายการ · ได้วันยืมเพิ่ม 7 วัน</span></div>
+        <div><b>มีรายการเกินกำหนด</b><span>ต้องคืนก่อนจึงจะยืมใหม่ได้</span></div>
+      </div>
+    </div>
+  </section>
 
-        <!-- สมาชิก -->
-        <section id="members" class="panel">
-            <div class="layout">
-                <form class="card form" id="memberForm">
-                    <h2>เพิ่มสมาชิก</h2>
-                    <label>ประเภท
-                        <select name="type">
-                            <option value="STUDENT">นักศึกษา</option>
-                            <option value="TEACHER">อาจารย์</option>
-                        </select>
-                    </label>
-                    <label>ชื่อ-นามสกุล <input name="name" required /></label>
-                    <label>อีเมล <input name="email" type="email" required /></label>
-                    <button class="btn primary" type="submit">บันทึก</button>
-                </form>
-                <div class="card">
-                    <div class="card-head"><h2>สมาชิกทั้งหมด</h2></div>
-                    <div class="table-wrap"><table id="memberTable"></table></div>
-                </div>
-            </div>
-        </section>
+  <section class="panel" id="items" hidden>
+    <div class="split">
+      <form class="card" id="itemForm">
+        <h2>เพิ่มทรัพยากร</h2>
+        <label>ประเภท
+          <select name="type" id="itemType">
+            <option value="BOOK">หนังสือทั่วไป</option>
+            <option value="MAGAZINE">นิตยสาร</option>
+            <option value="TEXTBOOK">ตำราเรียน</option>
+          </select>
+        </label>
+        <label>ชื่อเรื่อง <input name="title" id="itemTitle" required></label>
+        <label>ผู้แต่ง / สำนักพิมพ์ <input name="author" id="itemAuthor" required></label>
+        <label>ปีที่พิมพ์ (ค.ศ.) <input name="year" id="itemYear" type="number" inputmode="numeric" required></label>
+        <label><span id="extraLabel">ISBN (10 หรือ 13 หลัก)</span> <input name="extra" id="itemExtra" required></label>
+        <button class="btn primary" type="submit">บันทึก</button>
+      </form>
+      <div class="card">
+        <div class="head"><h2>ทรัพยากรทั้งหมด</h2><input class="search" id="itemSearch" placeholder="ค้นหาชื่อเรื่อง ผู้แต่ง ISBN"></div>
+        <div class="scroll"><table id="itemTable"></table></div>
+      </div>
+    </div>
+  </section>
 
-        <!-- ยืม-คืน -->
-        <section id="loans" class="panel">
-            <div class="layout">
-                <form class="card form" id="loanForm">
-                    <h2>ยืมทรัพยากร</h2>
-                    <label>สมาชิก <select name="memberId" id="loanMember"></select></label>
-                    <label>ทรัพยากร (เฉพาะที่ว่าง) <select name="itemId" id="loanItem"></select></label>
-                    <p class="hint" id="duePreview"></p>
-                    <button class="btn primary" type="submit">ยืม</button>
-                </form>
-                <div class="card">
-                    <div class="card-head">
-                        <h2>ประวัติการยืม-คืน</h2>
-                        <label class="toggle"><input type="checkbox" id="activeOnly" /> แสดงเฉพาะที่ยังไม่คืน</label>
-                    </div>
-                    <div class="table-wrap"><table id="loanTable"></table></div>
-                </div>
-            </div>
-        </section>
-    </main>
+  <section class="panel" id="members" hidden>
+    <div class="split">
+      <form class="card" id="memberForm">
+        <h2>เพิ่มสมาชิก</h2>
+        <label>ประเภท
+          <select name="type" id="memberType">
+            <option value="STUDENT">นักศึกษา</option>
+            <option value="TEACHER">อาจารย์</option>
+          </select>
+        </label>
+        <label>ชื่อ-นามสกุล <input name="name" id="memberName" required></label>
+        <label>อีเมล <input name="email" id="memberEmail" type="email" required></label>
+        <button class="btn primary" type="submit">บันทึก</button>
+      </form>
+      <div class="card">
+        <div class="head"><h2>สมาชิกทั้งหมด</h2></div>
+        <div class="scroll"><table id="memberTable"></table></div>
+      </div>
+    </div>
+  </section>
 
-    <div class="toast" id="toast"></div>
-    <script src="/app.js"></script>
+  <section class="panel" id="loans" hidden>
+    <div class="split">
+      <form class="card" id="loanForm">
+        <h2>ยืมทรัพยากร</h2>
+        <label>สมาชิก <select id="loanMember"></select></label>
+        <label>ทรัพยากร (เฉพาะที่ว่าง) <select id="loanItem"></select></label>
+        <p class="hint" id="duePreview"></p>
+        <button class="btn primary" type="submit">ยืม</button>
+      </form>
+      <div class="card">
+        <div class="head"><h2>ประวัติการยืม-คืน</h2><label class="check"><input type="checkbox" id="activeOnly"> เฉพาะที่ยังไม่คืน</label></div>
+        <div class="scroll"><table id="loanTable"></table></div>
+      </div>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/models.js"></script>
+<script src="js/repositories.js"></script>
+<script src="js/service.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

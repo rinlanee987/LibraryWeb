@@ -1,59 +1,29 @@
 # ระบบยืม-คืนหนังสือห้องสมุด (Library Management System)
 
-โครงงานวิชา Object-Oriented Programming — เว็บแอปพลิเคชันที่เชื่อมต่อฐานข้อมูล SQLite
-เขียนด้วย TypeScript ตามหลักการเขียนโปรแกรมเชิงวัตถุ
+โครงงานวิชา Object-Oriented Programming — เว็บแอปพลิเคชันเชื่อมต่อฐานข้อมูล **Supabase (PostgreSQL)**
+หน้าเว็บเป็น HTML/CSS/JavaScript ล้วน ฝากบน **GitHub Pages** ได้ฟรี ไม่ต้องมีเซิร์ฟเวอร์
 
-## สิ่งที่ต้องมี
-- Node.js เวอร์ชัน **22.18 ขึ้นไป** (หรือ 24 LTS) — ดาวน์โหลดที่ https://nodejs.org
-- ไม่ต้องติดตั้งไลบรารีเพิ่ม (ไม่ต้อง `npm install`) เพราะใช้ `node:http` และ `node:sqlite` ที่มากับ Node.js
-
-## วิธีรัน
-```bash
-cd library-web
-npm start
+## โครงสร้างไฟล์
 ```
-แล้วเปิด http://localhost:3000
-
-- ครั้งแรกระบบจะสร้างไฟล์ฐานข้อมูล `library.db` และใส่ข้อมูลตัวอย่างให้อัตโนมัติ
-- ต้องการล้างข้อมูลทั้งหมด: `npm run reset-db` แล้ว `npm start` ใหม่
-- เปลี่ยนพอร์ต: `PORT=8080 npm start` (Windows PowerShell: `$env:PORT=8080; npm start`)
-
-## โครงสร้างโปรเจกต์
-```
-library-web/
-├── src/
-│   ├── server.ts                 # จุดเริ่มต้น: สร้างเซิร์ฟเวอร์และกำหนด API
-│   ├── types.ts                  # ItemType, MemberType, Result<T>
-│   ├── db/Database.ts            # เชื่อมต่อ SQLite (Singleton) + สร้างตาราง
-│   ├── models/
-│   │   ├── LibraryItem.ts        # abstract class ทรัพยากร
-│   │   ├── items.ts              # Book, Magazine, Textbook
-│   │   ├── Member.ts             # abstract Member, Student, Teacher
-│   │   ├── Loan.ts               # การยืม (Composition ของ Item + Member)
-│   │   ├── factories.ts          # ItemFactory, MemberFactory
-│   │   └── DateUtil.ts
-│   ├── repositories/
-│   │   ├── Repository.ts         # abstract generic Repository<T>
-│   │   ├── ItemRepository.ts
-│   │   ├── MemberRepository.ts
-│   │   └── LoanRepository.ts
-│   ├── services/LibraryService.ts  # กฎการยืม-คืน และคำนวณค่าปรับ
-│   └── http/
-│       ├── Router.ts             # Router + RequestContext
-│       └── StaticServer.ts       # ส่งไฟล์หน้าเว็บ
-└── public/                       # หน้าเว็บ (HTML, CSS, JavaScript)
+index.html            หน้าเว็บ
+css/style.css         รูปแบบหน้าเว็บ
+js/config.js          URL และ publishable key ของ Supabase
+js/models.js          คลาสหลัก: LibraryItem, Book, Magazine, Textbook, Member, Student, Teacher, Loan, Factory
+js/repositories.js    Repository (abstract), ItemRepository, MemberRepository, LoanRepository
+js/service.js         LibraryService: กฎการยืม-คืนและค่าปรับ
+js/app.js             ส่วนแสดงผล (UI)
+setup.sql             คำสั่งสร้างตารางและข้อมูลตัวอย่าง
 ```
 
-## API
-| Method | Path | หน้าที่ |
-|---|---|---|
-| GET | /api/stats | สถิติภาพรวม |
-| GET | /api/items?q= | รายการ/ค้นหาทรัพยากร |
-| POST | /api/items | เพิ่มทรัพยากร |
-| DELETE | /api/items/:id | ลบทรัพยากร |
-| GET | /api/members | รายชื่อสมาชิก |
-| POST | /api/members | เพิ่มสมาชิก |
-| DELETE | /api/members/:id | ลบสมาชิก |
-| GET | /api/loans?active=1 | ประวัติการยืม |
-| POST | /api/loans | ยืม `{ itemId, memberId }` |
-| POST | /api/loans/:id/return | คืน |
+## ติดตั้ง
+1. **สร้างตาราง:** Supabase → SQL Editor → New query → วางเนื้อหา `setup.sql` ทั้งหมด → Run
+2. **อัปขึ้น GitHub:** อัปโหลดไฟล์ทั้งหมดในโฟลเดอร์นี้ขึ้น repository (ให้ `index.html` อยู่ชั้นนอกสุด)
+3. **เปิด GitHub Pages:** Settings → Pages → Source: *Deploy from a branch* → Branch: `main` / `(root)` → Save
+4. รอ 1–2 นาที เว็บจะอยู่ที่ `https://<ชื่อผู้ใช้>.github.io/<ชื่อ repository>/`
+
+## หลักการ OOP ที่ใช้
+- **Abstraction:** `LibraryItem`, `Member`, `Repository` เป็น abstract class
+- **Inheritance:** `Book`/`Magazine`/`Textbook` สืบทอด `LibraryItem`, `Student`/`Teacher` สืบทอด `Member`
+- **Polymorphism:** `Magazine` override `calculateFine()` และ `ItemFactory` คืนค่าเป็นคลาสแม่
+- **Encapsulation:** ใช้ private field (`#`) และ getter/setter
+- **Composition:** `Loan` ประกอบด้วย `LibraryItem` + `Member`, `LibraryService` ประกอบด้วย Repository ทั้งสาม
